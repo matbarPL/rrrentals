@@ -1,0 +1,40 @@
+library(lubridate)
+library(rrrentals)
+library(readxl)
+library(highcharter)
+
+server <-
+   function(input, output, session) {
+     addClass(selector = "body", class = "sidebar-collapse")
+      output$MonthlyPhase <- renderHighchart({
+        predict_rentals("month", input$target)
+      })
+      output$DailyPhase <- renderHighchart({
+        predict_rentals("day", input$target)
+      })
+
+      output$HolidayBarChart <- renderHighchart(
+        plot_barchart("holiday", input$target)
+      )
+
+      output$YearBarChart <- renderHighchart(
+        plot_barchart("yr", input$target)
+      )
+
+      output$CorrChart <- renderHighchart(
+        correlation_plot(input$target)
+      )
+
+      output$PMDaily <- renderTable(
+        get(paste(c("performance_metrics", input$target, "day"),
+                  collapse = "_")) %>%
+          head(8)
+      )
+
+      output$RCDaily <- renderTable(
+        get(paste(c("regressor_coefficients", input$target, "day"),
+                  collapse = "_")) %>%
+          head(8)
+      )
+   }
+

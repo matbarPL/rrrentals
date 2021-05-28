@@ -1,0 +1,150 @@
+library(shinydashboard)
+library(shinyjs)
+library(shinycssloaders)
+library(dplyr)
+library(highcharter)
+
+header <-
+   dashboardHeader( title = HTML("Witnessing the power of commuting systems’data. "),
+                    disable = FALSE,
+                    titleWidth  = 550
+
+   )
+
+siderbar <-
+   dashboardSidebar(
+      width = 200,
+      collapsed = FALSE,
+      sidebarMenu(
+         id = 'sidebar',
+         style = "position: relative; overflow: visible;",
+         menuItem( "Technical Output", tabName = 'dashboard', icon = icon('dashboard') ),
+         selectInput("target",
+                     "Select modeling output:",
+                     choices = c("Count" = "cnt",
+                                 "Registered" = "registered",
+                                 "Casual" = "casual")),
+         useShinyjs()
+         )
+   )
+
+body <- dashboardBody(
+   tags$head(
+      tags$script("document.title = '0'"),
+
+      tags$style(HTML(".small-box {height: 65px}")),
+      tags$style(HTML(".fa { font-size: 35px; }")),
+      tags$style(HTML(".glyphicon { font-size: 33px; }")),  ## use glyphicon package
+      tags$style(HTML(".fa-dashboard { font-size: 20px; }")),
+      tags$style(HTML(".fa-globe { font-size: 20px; }")),
+      tags$style(HTML(".fa-barcode { font-size: 20px; }")),
+      tags$style(HTML(".tab-content { padding-left: 20px; padding-right: 30px; }")) ,
+      tags$style(HTML(".fa-wrench { font-size: 15px; }")),
+      tags$style(HTML(".fa-refresh { font-size: 15px; }")),
+      tags$style(HTML(".fa-search { font-size: 15px; }")),
+      tags$style(HTML(".fa-comment { font-size: 20px; }")),
+      tags$style(HTML(".fa-share-alt { font-size: 20px; }")),
+      tags$style(HTML(".fa-envelope { font-size: 20px; }")),
+      tags$style(HTML(".fa-question-circle { font-size: 20px; }")),
+      tags$style(HTML(".fa-chevron-circle-down { font-size: 15px; }")),
+      tags$style(HTML(".fa-bell { font-size: 17px; }")),
+      tags$style(HTML(".fa-check { font-size: 14px; }")),
+      tags$style(HTML(".fa-times { font-size: 14px; }")),
+
+
+      tags$style(HTML('
+                       /* logo */
+                       .skin-blue .main-header .logo {
+                       background-color: "#0072B2;
+                       }
+
+                       /* logo when hovered */
+                       .skin-blue .main-header .logo:hover {
+                       background-color: "#0072B2;
+                       }
+
+                       /* navbar (rest of the header) */
+                       .skin-blue .main-header .navbar {
+                       background-color: "#0072B2;
+                       }
+
+                       /* active selected tab in the sidebarmenu */
+                       .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+                       background-color: "#0072B2;
+                                 }
+                       ')
+                ),
+
+
+      tags$style(HTML('
+                       /* change size of icons in sub-menu items */
+                      .sidebar .sidebar-menu .treeview-menu>li>a>.fa {
+                      font-size: 15px;
+                      }
+
+                      .sidebar .sidebar-menu .treeview-menu>li>a>.glyphicon {
+                      font-size: 13px;
+                      }
+
+                      /* Hide icons in sub-menu items */
+                      .sidebar .sidebar-menu .treeview>a>.fa-angle-left {
+                      display: none;
+                      }
+                      '
+                  )) ,
+
+      tags$style( HTML("hr {border-top: 1px solid #000000;}") ),
+
+      tags$style( HTML(".shiny-output-error { visibility: hidden; }") ),
+      tags$style( HTML(".shiny-output-error:before { visibility: hidden; }") ),
+
+      tags$style(HTML('.navbar-custom-menu>.navbar-nav>li:last-child>.dropdown-menu { width:10px; font-size:10px; padding:1px; margin:1px;}')),
+      tags$style(HTML('.navbar-custom-menu> .navbar-nav> li:last-child > .dropdown-menu > h4 {width:0px; font-size:0px; padding:0px; margin:0px;}')),
+      tags$style(HTML('.navbar-custom-menu> .navbar-nav> li:last-child > .dropdown-menu > p {width:0px; font-size:0px; padding:0px; margin:0px;}'))
+      ),
+
+
+   tabItems(
+      tabItem( tabName = 'dashboard',
+              fluidRow(
+                 column( width = 6,
+                         h4("Visualization of modelling for monthly prediction", align = 'center'),
+                         highchartOutput('MonthlyPhase') %>% withSpinner(type=4)),
+                 column( width = 6,
+                         h4("Visualization of modelling for daily prediction", align = 'center'),
+                         highchartOutput('DailyPhase') %>% withSpinner(type=4))
+
+               ),
+               fluidRow(
+                 column( width = 4,
+                         h4("Barchart for daily rentals across holidays", align = 'center'),
+                         highchartOutput('HolidayBarChart') %>% withSpinner(type=4)),
+                 column( width = 4,
+                         h4("Barchart for daily rentals across years", align = 'center'),
+                         highchartOutput('YearBarChart') %>% withSpinner(type=4)),
+                 column( width = 4,
+                         h4("Correlation plot continous regressors", align = 'center'),
+                         highchartOutput('CorrChart') %>% withSpinner(type=4))
+
+               ),
+               fluidRow(
+                 align = "center",
+                 br(),
+                 column(
+                   12,
+                   splitLayout(cellWidths = c("45%", "45%"),
+                               column( width = 4,
+                                       h4("Regressor coefficients for daily prediction", align = 'center'),
+                                       tableOutput('RCDaily') %>% withSpinner(type=4)),
+                               column( width = 4,
+                                       h4("Performance metrics for daily prediction", align = 'center'),
+                                       tableOutput('PMDaily') %>% withSpinner(type=4))
+                   )
+                 )
+             )
+      )
+   )
+)
+
+ui <-
+   dashboardPage(header, siderbar, body )

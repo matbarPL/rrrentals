@@ -1,0 +1,512 @@
+# Cross-validation --------------------------------------------------------
+seasons <- season_change_df %>% pull(dteday)
+seasons <- seasons[3:length(seasons)-1]
+df.cv <- cross_validation(model, cutoffs = seasons, horizon = 30, units = 'days')
+df.cv  %>% as_tibble() %>% write.xlsx("..\\Forecast modelling\\cross_validation_casual_day.xlsx")
+head(df.cv)
+df.p <- performance_metrics(df.cv)
+df.p  %>% as_tibble() %>% write.xlsx("..\\Forecast modelling\\performance_metrics_casual_day.xlsx")
+head(df.p)
+# Future predictions ------------------------------------------------------
+forecast <- predict(model, test_df)
+tail(forecast[c('ds', 'yhat', 'yhat_lower', 'yhat_upper')])
+plot(model, forecast)
+prophet_plot_components(model, forecast)
+plot_cross_validation_metric(df.cv, metric = "mae")
+regressor_coefficients_day <- regressor_coefficients(model)
+regressor_coefficients_day  %>% as_tibble() %>% write.xlsx("..\\Forecast modelling\\regressor_coefficients_casual_day.xlsx")
+head(df.p)
+# Regressor coefficients represents increase in prediction value for a unit increase in the
+# regressor value
+use_r("get_target_prety_name")
+usethis::use_r("get_target_prety_name")
+#' Returns variable pretty name
+#'
+#' @param target_var target variable, one of casual, registered or total
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_target_pretty_name <- function(target_var){
+if(!(target_var %in% c("registered", "cnt", "casual"))){
+stop("incorrect target variable")
+}
+else{
+if (target_var == "cnt"){
+target_var_pretty_name <- "Rentals total count"
+} else {
+target_var_pretty_name <- paste(c("Rentals", target_var, "count"), collapse = " ")
+}
+return(target_var_pretty_name)
+}
+}
+pacman::p_load(tidyverse,readxl,lubridate, prophet, dplyr, magrittr)
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+mnth_df
+mnth_df %<>% select(-c(cnt_mean, casual_mean))
+mnth_df %<>%
+rename(ds = date, y = registered_mean)
+train_df <- mnth_df %>% head(21)
+test_df <- mnth_df
+test_df %<>% select(-y)
+model <- prophet(yearly.seasonality=FALSE,
+weekly.seasonality=FALSE,
+daily.seasonality=FALSE,
+changepoint.prior.scale = 0.5)
+model <- add_regressor(m = model, name = "season", standardize = FALSE)
+model <- add_regressor(m = model, name = "holiday_X0_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "holiday_X1_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "workingday_X0_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "workingday_X1_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "weathersit_X1_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "weathersit_X2_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "weathersit_X3_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "temp_mean", standardize = TRUE)
+model <- add_regressor(m = model, name = "atemp_mean", standardize = TRUE)
+model <- add_regressor(m = model, name = "windspeed_mean", standardize = TRUE)
+model <- add_regressor(m = model, name = "hum_mean", standardize = TRUE)
+model <- fit.prophet(model, train_df)
+saveRDS(model, file="fitted_prophet_model_registered_month.RDS")
+getwd()
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+mnth_df
+mnth_df %<>% select(-c(cnt_mean, registered_mean))
+mnth_df %<>%
+rename(ds = date, y = casual_mean)
+train_df <- mnth_df %>% head(21)
+test_df <- mnth_df
+test_df %<>% select(-y)
+model <- prophet(yearly.seasonality=FALSE,
+weekly.seasonality=FALSE,
+daily.seasonality=FALSE,
+changepoint.prior.scale = 0.5)
+model <- add_regressor(m = model, name = "season", standardize = FALSE)
+model <- add_regressor(m = model, name = "holiday_X0_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "holiday_X1_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "workingday_X0_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "workingday_X1_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "weathersit_X1_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "weathersit_X2_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "weathersit_X3_count", standardize = FALSE)
+model <- add_regressor(m = model, name = "temp_mean", standardize = TRUE)
+model <- add_regressor(m = model, name = "atemp_mean", standardize = TRUE)
+model <- add_regressor(m = model, name = "windspeed_mean", standardize = TRUE)
+model <- add_regressor(m = model, name = "hum_mean", standardize = TRUE)
+model <- fit.prophet(model, train_df)
+saveRDS(model, file="fitted_prophet_model_casual_month.RDS")
+devtools::document()
+devtools::document()
+getwd()
+setwd("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling")
+list.dirs()
+list.dirs(getwd())
+list.dirs()
+fitted_prophet_model_casual_day <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_casual_day.RDS")
+fitted_prophet_model_cnt_day <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_cnt_day.RDS")
+fitted_prophet_model_cnt_month <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_cnt_month.RDS")
+fitted_prophet_model_casual_month <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_casual_month.RDS")
+fitted_prophet_model_cnt_month <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_cnt_month.RDS")
+fitted_prophet_model_registered_month <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_registered_month.RDS")
+usethis::use_data(fitted_prophet_model_casual_day )
+setwd("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rrrentals")
+usethis::use_data(fitted_prophet_model_casual_day )
+fitted_prophet_model_casual_day <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_casual_day.RDS")
+fitted_prophet_model_casual_month <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_casual_month.RDS")
+fitted_prophet_model_cnt_day <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_cnt_day.RDS")
+fitted_prophet_model_cnt_month <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_cnt_month.RDS")
+fitted_prophet_model_registered_day <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_registered_day.RDS")
+fitted_prophet_model_registered_month <- readRDS("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/fitted_prophet_model_registered_month.RDS")
+usethis::use_data(fitted_prophet_model_casual_day )
+usethis::use_data(fitted_prophet_model_casual_month )
+usethis::use_data(fitted_prophet_model_cnt_day )
+usethis::use_data(fitted_prophet_model_cnt_month )
+usethis::use_data(fitted_prophet_model_registered_day)
+usethis::use_data(fitted_prophet_model_registered_month)
+library(readxl)
+cross_validation_casual_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/cross_validation_casual_day.xlsx")
+usethis::use_data(cross_validation_casual_day)
+library(readxl)
+cross_validation_casual_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/cross_validation_cnt_day.xlsx")
+library(readxl)
+cross_validation_cnt_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/cross_validation_cnt_day.xlsx")
+usethis::use_data(cross_validation_cnt_day)
+library(readxl)
+cross_validation_registered_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/cross_validation_registered_day.xlsx")
+usethis::use_data(cross_validation_registered_day)
+performance_metrics_casual_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/performance_metrics_casual_day.xlsx")
+performance_metrics_cnt_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/performance_metrics_cnt_day.xlsx")
+performance_metrics_registered_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/performance_metrics_cnt_day.xlsx")
+performance_metrics_registered_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/performance_metrics_registered_day.xlsx")
+usethis::use_data(performance_metrics_casual_day)
+usethis::use_data(performance_metrics_cnt_day )
+usethis::use_data(performance_metrics_registered_day)
+regressor_coefficients_casual_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/regressor_coefficients_casual_day.xlsx")
+regressor_coefficients_cnt_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/regressor_coefficients_cnt_day.xlsx")
+regressor_coefficients_registered_day. <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/regressor_coefficients_registered_day.xlsx")
+usethis::use_data(regressor_coefficients_casual_day)
+usethis::use_data(regressor_coefficients_cnt_day)
+usethis::use_data(regressor_coefficients_registered_day)
+regressor_coefficients_registered_day <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/Forecast modelling/regressor_coefficients_registered_day.xlsx")
+usethis::use_data(regressor_coefficients_registered_day)
+#' @return pretty plot of bike rentals prediction
+#' @export
+#'
+#' @import prophet
+#' @import magrittr
+#' @import readxl
+#' @import lubridate
+#' @import dplyr
+#' @import highcharter
+#'
+predict_rentals <- function(granularity_level, target_var){
+target_var_pretty_name <- get_target_pretty_name(target_var)
+if(granularity_level %in% c("day", "month")){
+model <- get(paste(c("fitted_prophet_model", target_var, granularity_level), collapse = "_"))
+test_df <- get(paste(c("test", granularity_level, "df"), collapse = "_"))
+forecast <- predict(model, test_df)
+train_df <- get(paste(c(granularity_level, "df"), collapse = "_"))
+cutoff <- get(paste(c("cutoff", granularity_level), collapse = "_"))
+}
+else{
+stop("incorrect argument for granularity level")
+}
+highchart_forecast <- forecast %>%
+select(ds, yhat_lower, yhat_upper, yhat) %>%
+inner_join(train_df %>%
+select(date, cnt) %>%
+rename(ds = date,
+y = cnt))
+highchart_forecast %<>%
+rename(low = yhat_lower,
+high = yhat_upper,
+date = ds) %>%
+mutate(date = datetime_to_timestamp(date))
+forecast_to_highcharts<- list_parse2(highchart_forecast)
+highchart() %>%
+hc_add_series(name = 'Confidence boundaries', data = forecast_to_highcharts, type = "arearange", color = "#0072B2", fillOpacity = 0.1) %>%
+hc_add_series(name = 'Fitted values',data = highchart_forecast, type = "spline", color = "#0072B2", hcaes(x = date, y = yhat)) %>%
+hc_add_series(name = 'Actual values', data = highchart_forecast, type = "scatter", marker=list(symbol='circle', radius=3),
+color = "black", size = 0.5, hcaes(x = date, y = y)) %>%
+hc_xAxis(type = "datetime",
+title = list(text = "ds"),
+plotBands = list(
+color = "rgb(255, 0, 0)",
+from = cutoff,
+to = cutoff)
+) %>%
+hc_yAxis(title = list(text = "y"))
+}
+predict_rentals("month", "cnt")
+#' Returns variable pretty name
+#'
+#' @param target_var target variable, one of casual, registered or total
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_target_pretty_name <- function(target_var){
+if(!(target_var %in% c("registered", "cnt", "casual"))){
+stop("incorrect target variable")
+}
+else{
+if (target_var == "cnt"){
+target_var_pretty_name <- "Rentals total count"
+} else {
+target_var_pretty_name <- paste(c("Rentals", target_var, "count"), collapse = " ")
+}
+return(target_var_pretty_name)
+}
+}
+predict_rentals("month", "cnt")
+library(rrrentals)
+predict_rentals("month", "cnt")
+library(dplyr)
+predict_rentals("month", "cnt")
+library(highcharter)
+predict_rentals("month", "cnt")
+predict_rentals("month", "casual")
+rrrentals::test_day_df
+predict_rentals("day", "casual")
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+day_df <- read_xlsx("..//..//01_input_files/day.xlsx")
+day_df %<>% select(-c(registered, cnt))
+day_df %<>%
+rename(ds = dteday, y = casual)
+train_df <- day_df %>% filter(instant < 701)
+test_df <- day_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_casual_df.xlsx")
+pacman::p_load(tidyverse,readxl,lubridate, prophet, dplyr, magrittr)
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+day_df <- read_xlsx("..//..//01_input_files/day.xlsx")
+day_df %<>% select(-c(registered, cnt))
+day_df %<>%
+rename(ds = dteday, y = casual)
+train_df <- day_df %>% filter(instant < 701)
+test_df <- day_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_casual_df.xlsx")
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+day_df <- read_xlsx("..//..//01_input_files/day.xlsx")
+day_df %<>% select(-c(casual, cnt))
+day_df %<>%
+rename(ds = dteday, y = casual)
+train_df <- day_df %>% filter(instant < 701)
+test_df <- day_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_registered_df.xlsx")
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+day_df <- read_xlsx("..//..//01_input_files/day.xlsx")
+day_df %<>% select(-c(casual, cnt))
+day_df %<>%
+rename(ds = dteday, y = casual)
+train_df <- day_df %>% filter(instant < 701)
+test_df <- day_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_registered_df.xlsx")
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+day_df <- read_xlsx("..//..//01_input_files/day.xlsx")
+day_df %<>% select(-c(casual, cnt))
+day_df %>% glimpse()
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+day_df <- read_xlsx("..//..//01_input_files/day.xlsx")
+day_df %<>% select(-c(casual, cnt))
+day_df %<>%
+rename(ds = dteday, y = registered)
+train_df <- day_df %>% filter(instant < 701)
+test_df <- day_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_registered_df.xlsx")
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+day_df <- read_xlsx("..//..//01_input_files/day.xlsx")
+day_df %<>% select(-c(casual, registered))
+day_df %<>%
+rename(ds = dteday, y = cnt)
+train_df <- day_df %>% filter(instant < 701)
+test_df <- day_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_cnt_df.xlsx")
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+mnth_df
+mnth_df %<>% select(-c(casual_mean, registered_mean))
+mnth_df %<>%
+rename(ds = date, y = casual_mean)
+train_df <- mnth_df %>% head(21)
+test_df <- mnth_df
+test_df %<>% select(-y)
+#test_df %>% writexl::write_xlsx("..//..//01_input_files/test_cnt_month.xlsx")
+# Model fitting -----------------------------------------------------------
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+mnth_df
+mnth_df %<>% select(-c(casual_mean, registered_mean))
+mnth_df %<>%
+rename(ds = date, y = cnt_mean)
+train_df <- mnth_df %>% head(21)
+test_df <- mnth_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_cnt_month.xlsx")
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+mnth_df
+mnth_df %<>% select(-c(cnt_mean, registered_mean))
+mnth_df %<>%
+rename(ds = date, y = casual_mean)
+train_df <- mnth_df %>% head(21)
+test_df <- mnth_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_casual_month.xlsx")
+source("..\\..\\02_assets/Preprocessing/preprocess_month.R")
+mnth_df
+mnth_df %<>% select(-c(cnt_mean, casual_mean))
+mnth_df %<>%
+rename(ds = date, y = registered_mean)
+train_df <- mnth_df %>% head(21)
+test_df <- mnth_df
+test_df %<>% select(-y)
+test_df %>% writexl::write_xlsx("..//..//01_input_files/test_registered_month.xlsx")
+library(readxl)
+test_casual_day_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_casual_day_df.xlsx")
+usethis::use_data(test_casual_day_df)
+library(readxl)
+test_casual_month_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_casual_month_df.xlsx")
+usethis::use_data(test_casual_month_df)
+library(readxl)
+test_cnt_day_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_cnt_day_df.xlsx")
+usethis::use_data(test_cnt_day_df)
+library(readxl)
+test_cnt_month_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_cnt_month_df.xlsx")
+library(readxl)
+test_cnt_regstered_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_cnt_regstered_df.xlsx")
+library(readxl)
+test_cnt_df.xlsx <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_cnt_df.xlsx")
+library(readxl)
+test_cnt_month_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_cnt_month_df.xlsx")
+usethis::use_data(test_cnt_month_df)
+library(readxl)
+test_registered_day_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_registered_day_df.xlsx")
+library(readxl)
+test_registered_month_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_registered_month_df.xlsx")
+library(readxl)
+test_registered_month_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_registered_month_df.xlsx")
+library(readxl)
+test_registered_month_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/test_registered_month.xlsx")
+usethis::use_data(test_registered_month_df)
+usethis::use_data(test_registered_day_df)
+devtools::document()
+devtools::document()
+library(rrrentals)
+shiny::runApp('E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rentalsForecast')
+get(paste(c("test", target_var, granularity_level, "df"), collapse = "_"))
+get(paste(c("test", "cnt", "month", "df"), collapse = "_"))
+library(readxl)
+day_df <- read_excel("E:/Data Science and Business Analytics/Semester 2/APR/APR/01_input_files/day.xlsx")
+usethis::use_data(day_df)
+devtools::document()
+devtools::document()
+highchart_forecast <- forecast %>%
+select(ds, yhat_lower, yhat_upper, yhat) %>%
+inner_join(train_df %>%
+select(date, target_var) %>%
+rename(ds = date,
+y = !target_var))
+library(rrrentals)
+runApp('E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rentalsForecast')
+predict_rentals("day", "cnt")
+#' @return pretty plot of bike rentals prediction
+#' @export
+#'
+#' @import prophet
+#' @import magrittr
+#' @import readxl
+#' @import lubridate
+#' @import dplyr
+#' @import highcharter
+#'
+predict_rentals <- function(granularity_level, target_var){
+target_var_pretty_name <- get_target_pretty_name(target_var)
+if(granularity_level %in% c("day", "month")){
+model <- get(paste(c("fitted_prophet_model", target_var, granularity_level), collapse = "_"))
+test_df <- get(paste(c("test", target_var, granularity_level, "df"), collapse = "_"))
+forecast <- predict(model, test_df)
+train_df <- get(paste(c(granularity_level, "df"), collapse = "_"))
+cutoff <- get(paste(c("cutoff", granularity_level), collapse = "_"))
+}
+else{
+stop("incorrect argument for granularity level")
+}
+browser()
+highchart_forecast <- forecast %>%
+select(ds, yhat_lower, yhat_upper, yhat) %>%
+inner_join(train_df %>%
+select(date, target_var) %>%
+rename(ds = date,
+y = !target_var))
+highchart_forecast %<>%
+rename(low = yhat_lower,
+high = yhat_upper,
+date = ds) %>%
+mutate(date = datetime_to_timestamp(date))
+forecast_to_highcharts<- list_parse2(highchart_forecast)
+highchart() %>%
+hc_add_series(name = 'Confidence boundaries', data = forecast_to_highcharts, type = "arearange", color = "#0072B2", fillOpacity = 0.1) %>%
+hc_add_series(name = 'Fitted values',data = highchart_forecast, type = "spline", color = "#0072B2", hcaes(x = date, y = yhat)) %>%
+hc_add_series(name = 'Actual values', data = highchart_forecast, type = "scatter", marker=list(symbol='circle', radius=3),
+color = "black", size = 0.5, hcaes(x = date, y = y)) %>%
+hc_xAxis(type = "datetime",
+title = list(text = "ds"),
+plotBands = list(
+color = "rgb(255, 0, 0)",
+from = cutoff,
+to = cutoff)
+) %>%
+hc_yAxis(title = list(text = "y"))
+}
+predict_rentals("day", "cnt")
+train_df
+train_df %>%
+select(date, target_var) %>%
+rename(ds = date,
+y = !target_var)
+forecast %>%
+select(ds, yhat_lower, yhat_upper, yhat) %>%
+inner_join(train_df %>%
+select(date, target_var) %>%
+rename(ds = date,
+y := !target_var))
+train_df %>% select(date, target_var) %>%
+rename(ds = date,
+y := !target_var)
+train_df %>% select(date, target_var) %>%
+rename(ds = date,
+y = {{target_var}})
+#' @return pretty plot of bike rentals prediction
+#' @export
+#'
+#' @import prophet
+#' @import magrittr
+#' @import readxl
+#' @import lubridate
+#' @import dplyr
+#' @import highcharter
+#'
+predict_rentals <- function(granularity_level, target_var){
+target_var_pretty_name <- get_target_pretty_name(target_var)
+if(granularity_level %in% c("day", "month")){
+model <- get(paste(c("fitted_prophet_model", target_var, granularity_level), collapse = "_"))
+test_df <- get(paste(c("test", target_var, granularity_level, "df"), collapse = "_"))
+forecast <- predict(model, test_df)
+train_df <- get(paste(c(granularity_level, "df"), collapse = "_"))
+cutoff <- get(paste(c("cutoff", granularity_level), collapse = "_"))
+}
+else{
+stop("incorrect argument for granularity level")
+}
+highchart_forecast <- forecast %>%
+select(ds, yhat_lower, yhat_upper, yhat) %>%
+inner_join(train_df %>%
+select(date, target_var) %>%
+rename(ds = date,
+y = {{target_var}}))
+highchart_forecast %<>%
+rename(low = yhat_lower,
+high = yhat_upper,
+date = ds) %>%
+mutate(date = datetime_to_timestamp(date))
+forecast_to_highcharts<- list_parse2(highchart_forecast)
+highchart() %>%
+hc_add_series(name = 'Confidence boundaries', data = forecast_to_highcharts, type = "arearange", color = "#0072B2", fillOpacity = 0.1) %>%
+hc_add_series(name = 'Fitted values',data = highchart_forecast, type = "spline", color = "#0072B2", hcaes(x = date, y = yhat)) %>%
+hc_add_series(name = 'Actual values', data = highchart_forecast, type = "scatter", marker=list(symbol='circle', radius=3),
+color = "black", size = 0.5, hcaes(x = date, y = y)) %>%
+hc_xAxis(type = "datetime",
+title = list(text = "ds"),
+plotBands = list(
+color = "rgb(255, 0, 0)",
+from = cutoff,
+to = cutoff)
+) %>%
+hc_yAxis(title = list(text = "y"))
+}
+predict_rentals("day", "cnt")
+predict_rentals("month", "cnt")
+predict_rentals("month", "registered")
+predict_rentals("month", "casual")
+library(rrrentals)
+shiny::runApp('E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rentalsForecast')
+shiny::runApp('E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rentalsForecast')
+runApp('E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rentalsForecast')
+runApp('E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rentalsForecast')
+runApp('E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rentalsForecast')
+version
+instll.packages("installr")
+install.packages("installr")
+\
+library(installr)
+updateR()
+version
+pacman
+install.packages("pacman")
+pacman::p_load(readxl, openxlsx, magrittr, recipes, xlsx,RColorBrewer,rrrentals)
+pacman::p_load(openxlsx, recipes)
+installr::updateR()

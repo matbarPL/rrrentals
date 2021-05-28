@@ -1,0 +1,13 @@
+{
+    "dialog-state": {
+        "query": "test_day_df",
+        "path": "E:/Data Science and Business Analytics/Semester 2/APR/APR/02_assets/rrrentals",
+        "regex": false,
+        "caseSensitive": false,
+        "filePatterns": [],
+        "excludeFilePatterns": [],
+        "resultsCount": 0,
+        "errorCount": 0,
+        "replaceErrors": ""
+    }
+}
