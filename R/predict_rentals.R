@@ -38,19 +38,21 @@ predict_rentals <- function(granularity_level, target_var){
     rename(low = yhat_lower,
            high = yhat_upper,
            date = ds) %>%
-    mutate(date = datetime_to_timestamp(date))
-  forecast_to_highcharts<- list_parse2(highchart_forecast)
+    mutate(date = datetime_to_timestamp(lubridate::ymd(date)))
+  forecast_to_highcharts <- list_parse2(highchart_forecast)
   highchart() %>%
     hc_add_series(name = 'Confidence boundaries', data = forecast_to_highcharts, type = "arearange", color = "#0072B2", fillOpacity = 0.1) %>%
     hc_add_series(name = 'Fitted values',data = highchart_forecast, type = "spline", color = "#0072B2", hcaes(x = date, y = yhat)) %>%
     hc_add_series(name = 'Actual values', data = highchart_forecast, type = "scatter", marker=list(symbol='circle', radius=3),
                   color = "black", size = 0.5, hcaes(x = date, y = y)) %>%
     hc_xAxis(type = "datetime",
+             dateTimeLabelFormats = list(day = '%Y:%M'),
              title = list(text = "ds"),
              plotBands = list(
                color = "rgb(255, 0, 0)",
                from = cutoff,
                to = cutoff)
              ) %>%
-    hc_yAxis(title = list(text = "y"))
+    hc_yAxis(title = list(text = "y")) %>%
+    hc_tooltip(crosshairs = TRUE, pointFormat = "x: {point.x:%Y:%m:%d} <br> y: {point.y}")
 }
